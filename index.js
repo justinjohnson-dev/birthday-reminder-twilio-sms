@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const app = express();
 require('dotenv').config();
 
-const port = process.env.PORT;
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
@@ -20,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 }).then(() => console.log('DB Connected'));
 
 // middleware for handling sample api routes
-app.use('/api/v1', require('./routes/api/user'));
+// app.use('/api/v1', require('./routes/api/user'));
 
 // create static assets from react code for production only
 if (process.env.NODE_ENV === 'production') {
@@ -32,20 +31,50 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Schedule tasks to be run on the server.
-// cron.schedule('* * * * *', function () {
-//     User.find().then(user => {
-//         console.log(user);
-//         client.messages
-//             .create({
-//                 body: "hello, " + user,
-//                 messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-//                 to: '+17153070876'
-//             })
-//             .then(message => console.log(message.sid))
-//             .done();
-//         console.log('Text was successfully sent')
-//     });
-// });
+cron.schedule('* * * * *', function () {
+    getBirthdays();
+});
+
+async function getBirthdays() {
+    User.find().then(user => {
+        user.forEach((element) => {
+            findBirthdays(element);
+        })
+    });
+}
+
+async function findBirthdays(user) {
+    let today = new Date();
+    today = today.toString().slice(4, 10)
+
+    new Promise(function (resolve, reject) {
+        user.birthdays.forEach(async (element) => {
+            let birthday = new Date(element.birthdayDate)
+            birthday = birthday.toString().slice(4, 10)
+            if (birthday == today) {
+                let res = await sendText(element.birthdayName, user.name, user.phone_number);
+                resolve(res);
+            } else {
+                resolve('no birthday was found')
+            }
+        });
+    });
+}
+
+async function sendText(birthdayName, userName, userPhone) {
+    new Promise(function (resolve, reject) {
+        client.messages
+            .create({
+                body: "hello! Today is " + birthdayName + " birthday!! the account whom this is sending from is " + userName,
+                messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
+                to: userPhone
+            })
+            .then(message => console.log(message.sid))
+            .done();
+        resolve('Text was successfully sent')
+    });
+}
+
 
 // use port from environment variables for production
 const PORT = process.env.PORT || 5000;

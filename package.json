@@ -4,7 +4,8 @@
   "description": "Send text messages to our birthday app users",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon ./index.js"
   },
   "author": "Justin",
   "license": "ISC",
@@ -14,5 +15,8 @@
     "mongoose": "^5.11.18",
     "node-cron": "^2.0.3",
     "twilio": "^3.56.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
