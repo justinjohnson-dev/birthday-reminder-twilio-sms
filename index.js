@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 }).then(() => console.log('DB Connected'));
 
 // middleware for handling sample api routes
-// app.use('/api/v1', require('./routes/api/user'));
+app.use('/api/v1', require('./routes/api/user'));
 
 // create static assets from react code for production only
 if (process.env.NODE_ENV === 'production') {
@@ -31,8 +31,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Schedule tasks to be run on the server.
-cron.schedule('0 8 * * *', function () {
-    getBirthdays();
+cron.schedule('30 10 * * *', function () {
+    getBirthday();
 });
 
 async function getBirthdays() {
