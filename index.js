@@ -65,7 +65,7 @@ async function sendText(birthdayName, userName, userPhone) {
     new Promise(function (resolve, reject) {
         client.messages
             .create({
-                body: "hello! Today is " + birthdayName + " birthday!! the account whom this is sending from is " + userName,
+                body: "Good Morning, Today is " + birthdayName + "s birthday! This is your friendly reminder to say Happy Birthday.",
                 messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
                 to: userPhone
             })
