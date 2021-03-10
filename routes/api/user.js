@@ -6,19 +6,23 @@ const User = require("../../models/user");
 const client = require('twilio')(accountSid, authToken);
 require('dotenv').config();
 
-router.post("/birthdays", (req, res, next) => {
-    console.log(req.body);
-    res.send(200);
+router.post("/testsms", (req, res, next) => {
+    try {
+        sendText();
+        res.sendStatus(status)
+    } catch (err) {
+        res.send(err);
+    }
 });
 
 
-async function sendText(birthdayName, userName, userPhone) {
+async function sendText() {
     new Promise(function (resolve, reject) {
         client.messages
             .create({
-                body: "hello! Today is " + birthdayName + " birthday!! the account whom this is sending from is " + userName,
+                body: "hello! This is a test.",
                 messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-                to: userPhone
+                to: '7153070876'
             })
             .then(message => console.log(message.sid))
             .done();
