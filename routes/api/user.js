@@ -6,7 +6,7 @@ const User = require("../../models/user");
 const client = require('twilio')(accountSid, authToken);
 require('dotenv').config();
 
-router.post("/testsms", (req, res, next) => {
+router.get("/testsms", (req, res, next) => {
     try {
         sendText();
         res.sendStatus(status)
