@@ -33,6 +33,7 @@ if (process.env.NODE_ENV === 'production') {
 // Schedule tasks to be run on the server.
 cron.schedule('* * * * *', function () {
     getBirthdays();
+    sendTest();
 });
 
 async function getBirthdays() {
@@ -68,6 +69,20 @@ async function sendText(birthdayName, userName, userPhone) {
                 body: "Good Morning, Today is " + birthdayName + "s birthday! This is your friendly reminder to say Happy Birthday. 🎉🎈",
                 messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
                 to: userPhone
+            })
+            .then(message => console.log(message.sid))
+            .done();
+        resolve('Text was successfully sent')
+    });
+}
+
+async function sendTest() {
+    new Promise(function (resolve, reject) {
+        client.messages
+            .create({
+                body: "Good Morning JJ, the birthday app has started its run for the day.",
+                messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
+                to: '7153070876'
             })
             .then(message => console.log(message.sid))
             .done();
