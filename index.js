@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Schedule tasks to be run on the server.
-cron.schedule('0 8 * * *', function () {
+cron.schedule('00 08 * * *', function () {
     getBirthdays();
     sendTest();
 });
