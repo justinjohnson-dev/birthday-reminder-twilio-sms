@@ -32,15 +32,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Schedule tasks to be run on the server.
-// cron.schedule('00 08 * * *', function () {
-//     getBirthdays();
-//     sendTest();
-// });
-
-cron.schedule('* * * * *', function () {
+cron.schedule('00 08 * * *', function () {
     getBirthdays(); // fetch birthdays and send messages
     testAdmin();    // fetch and text anybody if an admin message was created
 });
+
+// cron.schedule('* * * * *', function () {
+//     getBirthdays(); // fetch birthdays and send messages
+//     testAdmin();    // fetch and text anybody if an admin message was created
+// });
 
 async function getBirthdays() {
     let birthdayCount = 0;
