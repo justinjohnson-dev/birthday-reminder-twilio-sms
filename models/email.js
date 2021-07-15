@@ -13,11 +13,9 @@ const emailSchema = new Schema({
     },
     message_body: {
         type: String,
-        required: true
     },
     html: {
         type: String,
-        required: true
     }
 });
 
