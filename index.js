@@ -18,6 +18,9 @@ mongoose.connect(process.env.MONGODB_URI, {
     useCreateIndex: true
 }).then(() => console.log('DB Connected'));
 
+// express middleware handling the body parsing 
+app.use(express.json());
+
 // middleware for handling sample api routes
 app.use('/api/v1', require('./routes/api/user'));
 
@@ -31,7 +34,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Schedule tasks to be run on the server.
-cron.schedule('00 08 * * *', function () {
+cron.schedule('0 10 * * *', function () {
     getBirthdays();
     sendTest();
 });
