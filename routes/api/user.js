@@ -28,7 +28,7 @@ router.post("/sendEmail", (req, res) => {
 
     try {
         sendEmail(send_to, message_subject, message_body, html);
-        res.sendStatus(status);
+        res.sendStatus("Email sent successfully!");
     } catch (err) {
         res.send(err);
     }
