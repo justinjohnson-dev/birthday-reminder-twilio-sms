@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const mongoose = require('mongoose');
 const app = express();
 require('dotenv').config();
+const fs = require("fs");
 
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
@@ -38,6 +39,7 @@ if (process.env.NODE_ENV === 'production') {
 cron.schedule('00 08 * * *', function () {
     getBirthdays(); // fetch birthdays and send messages
     testAdmin();    // fetch and text anybody if an admin message was created
+    sendMessageToJustinsContacts();
 });
 
 // cron.schedule('* * * * *', function () {
@@ -50,13 +52,14 @@ async function getBirthdays() {
     User.find().then(user => {
         user.forEach((element) => {
             findBirthdays(element).then((result) => {
-                if (result == 1) {
-                    birthdayCount++;
+                if (result != 0) {
+                    birthdayCount += result;
                 }
             });
         });
     });
 
+    // 10 seconds after birthdays were found, text myself how many birthdays were found total
     setTimeout(function () { sendTest(birthdayCount); }, 10000);
 }
 
@@ -96,6 +99,53 @@ async function testAdmin() {
     });
 }
 
+async function sendMessageToJustinsContacts() {
+    User.find().then(user => {
+        user.forEach((element) => {
+            if (element.phone_number == 7153070876) {
+                findAdminTextBirthdays(element).then((result) => {
+                    if (result == 1) {
+                        birthdayCount++;
+                    }
+                });
+            }
+        });
+    });
+}
+
+async function findAdminTextBirthdays(user) {
+    let today = new Date();
+    let sentBirthday = [];
+
+    today = today.toString().slice(4, 10);
+
+    new Promise(function (resolve, reject) {
+        user.birthdays.forEach(async (element) => {
+            let birthday = new Date(element.birthdayDate)
+            birthday = birthday.toString().slice(4, 10)
+
+            if (birthday == today) {
+                sentBirthday.push(element.birthdayName);
+                try {
+                    const jsonString = fs.readFileSync("./birthdays.json");
+                    const birthdays = JSON.parse(jsonString);
+
+                    let res = await sendAdminTextMessage(element.birthdayName, user.name, birthdays[element.birthdayName]);
+                    resolve(res);
+                } catch (err) {
+                    console.log(err);
+                    return;
+                }
+            } else {
+                resolve('no birthday was found')
+            }
+        });
+    });
+
+    await sendTextToJustinNotifyingWhoJarvisTexted(sentBirthday, 7153070876);
+    return sentBirthday;
+}
+
 async function findBirthdays(user) {
     let today = new Date();
     let foundBirthday = 0;
@@ -116,6 +166,34 @@ async function findBirthdays(user) {
     });
 
     return foundBirthday;
+}
+
+async function sendAdminTextMessage(birthdayName, userName, userPhone) {
+    new Promise(function (resolve, reject) {
+        client.messages
+            .create({
+                body: "Good Morning! This is Jarvis 🤖 one of Justin's Twilio Bots. I am here to wish you a Happy Birthday! Have a great day. 🎉🎈",
+                messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
+                to: userPhone
+            })
+            .then(message => console.log(message.sid))
+            .done();
+        resolve('Text was successfully sent')
+    });
+}
+
+async function sendTextToJustinNotifyingWhoJarvisTexted(sentMessageNames, phone_number) {
+    new Promise(function (resolve, reject) {
+        client.messages
+            .create({
+                body: "Hey JJ, Jarvis sent emails today to " + sentMessageNames,
+                messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
+                to: phone_number
+            })
+            .then(message => console.log(message.sid))
+            .done();
+        resolve('Text was successfully sent')
+    });
 }
 
 async function sendText(birthdayName, userName, userPhone) {
