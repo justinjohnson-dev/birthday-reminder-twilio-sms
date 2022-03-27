@@ -9,7 +9,6 @@ const client = require('twilio')(accountSid, authToken);
 require('dotenv').config();
 sgMail.setApiKey(process.env.API_KEY);
 
-
 router.get("/testsms", (req, res) => {
     try {
         sendText();
