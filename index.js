@@ -3,12 +3,12 @@ const cron = require('node-cron');
 const mongoose = require('mongoose');
 const app = express();
 require('dotenv').config();
-const fs = require('fs');
-
-const accountSid = process.env.ACCOUNT_SID;
-const authToken = process.env.AUTH_TOKEN;
-const client = require('twilio')(accountSid, authToken);
-const User = require('./models/user');
+const bodyParser = require('body-parser');
+const user = require('./src/routes/user.route');
+const { getBirthdays } = require('./src/services/birthday.service');
+const {
+  sendMessageToJustinsContacts,
+} = require('./src/services/admin.service');
 
 // exclusing dotenv config from production
 if (process.env.NODE_ENV !== 'production') require('dotenv').config();
@@ -21,11 +21,27 @@ mongoose
   })
   .then(() => console.log('DB Connected'));
 
-// express middleware handling the body parsing
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 
-// middleware for handling sample api routes
-app.use('/api/v1', require('./routes/api/user'));
+app.get('/', (req, res) => {
+  res.json({ message: '200' });
+});
+
+app.use('/user', user);
+
+/* Error handler middleware */
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  console.error(err.message, err.stack);
+  res.status(statusCode).json({ message: err.message });
+
+  return;
+});
 
 // create static assets from react code for production only
 if (process.env.NODE_ENV === 'production') {
@@ -35,6 +51,13 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
   });
 }
+
+// use port from environment variables for production
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`server running on port ${PORT}`);
+});
 
 // Schedule tasks to be run on the server.
 cron.schedule('00 08 * * *', function () {
@@ -47,173 +70,3 @@ cron.schedule('00 08 * * *', function () {
 //   getBirthdays(); // fetch birthdays and send messages
 //   sendMessageToJustinsContacts();
 // });
-
-async function getBirthdays() {
-  let birthdayCount = 0;
-  User.find().then((user) => {
-    user.forEach((element) => {
-      findBirthdays(element).then((result) => {
-        if (result != 0) {
-          birthdayCount += result;
-        }
-      });
-    });
-  });
-
-  // 10 seconds after birthdays were found, text myself how many birthdays were found total
-  setTimeout(function () {
-    sendTest(birthdayCount);
-  }, 10000);
-}
-
-async function sendMessageToJustinsContacts() {
-  User.find().then((user) => {
-    user.forEach((element) => {
-      if (element.phone_number == 7153070876) {
-        findAdminTextBirthdays(element).then((result) => {
-          if (result == 1) {
-            birthdayCount++;
-          }
-        });
-      }
-    });
-  });
-}
-
-async function findAdminTextBirthdays(user) {
-  let today = new Date();
-  let sentBirthday = [];
-
-  today = today.toString().slice(4, 10);
-
-  new Promise(function (resolve, reject) {
-    user.birthdays.forEach(async (element) => {
-      let birthday = new Date(element.birthdayDate);
-      birthday = birthday.toString().slice(4, 10);
-
-      if (birthday == today) {
-        sentBirthday.push(element.birthdayName);
-        try {
-          const jsonString = fs.readFileSync('./birthdays.json');
-          const birthdays = JSON.parse(jsonString);
-
-          let res = await sendAdminTextMessage(
-            element.birthdayName,
-            user.name,
-            birthdays[element.birthdayName]
-          );
-          resolve(res);
-        } catch (err) {
-          console.log(err);
-          return;
-        }
-      } else {
-        resolve('no birthday was found');
-      }
-    });
-  });
-
-  await sendTextToJustinNotifyingWhoJarvisTexted(sentBirthday, 7153070876);
-  return sentBirthday;
-}
-
-async function findBirthdays(user) {
-  let today = new Date();
-  let foundBirthday = 0;
-  today = today.toString().slice(4, 10);
-
-  new Promise(function (resolve, reject) {
-    user.birthdays.forEach(async (element) => {
-      let birthday = new Date(element.birthdayDate);
-      birthday = birthday.toString().slice(4, 10);
-      if (birthday == today) {
-        foundBirthday++;
-        let res = await sendText(
-          element.birthdayName,
-          user.name,
-          user.phone_number
-        );
-        resolve(res);
-      } else {
-        resolve('no birthday was found');
-      }
-    });
-  });
-
-  return foundBirthday;
-}
-
-async function sendAdminTextMessage(birthdayName, userName, userPhone) {
-  new Promise(function (resolve, reject) {
-    client.messages
-      .create({
-        body: `Good Morning! This is Jarvis 🤖 one of Justin's Twilio Bots. I am here to wish you a Happy Birthday! Have a great day. 🎉🎈`,
-        messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-        to: userPhone,
-      })
-      .then((message) => console.log(message.sid))
-      .done();
-    resolve('Text was successfully sent');
-  });
-}
-
-async function sendTextToJustinNotifyingWhoJarvisTexted(
-  sentMessageNames,
-  phone_number
-) {
-  new Promise(function (resolve, reject) {
-    client.messages
-      .create({
-        body:
-          sentMessageNames.length > 0
-            ? 'Jarvis sent text messages today to ' + sentMessageNames
-            : 'Jarvis sent no text messages today.',
-        messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-        to: phone_number,
-      })
-      .then((message) => console.log(message.sid))
-      .done();
-    resolve('Text was successfully sent');
-  });
-}
-
-async function sendText(birthdayName, userName, userPhone) {
-  new Promise(function (resolve, reject) {
-    client.messages
-      .create({
-        body:
-          'Good Morning, Today is ' +
-          birthdayName +
-          's birthday! This is your friendly reminder to say Happy Birthday. 🎉🎈',
-        messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-        to: userPhone,
-      })
-      .then((message) => console.log(message.sid))
-      .done();
-    resolve('Text was successfully sent');
-  });
-}
-
-async function sendTest(birthdayCount) {
-  new Promise(function (resolve, reject) {
-    client.messages
-      .create({
-        body:
-          'Good Morning JJ, Jarvis found ' +
-          birthdayCount +
-          ' birthdays today.',
-        messagingServiceSid: 'MGd15a148e7bc6f6130e81dbccf13652b1',
-        to: '7153070876',
-      })
-      .then((message) => console.log(message.sid))
-      .done();
-    resolve('Text was successfully sent');
-  });
-}
-
-// use port from environment variables for production
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`server running on port ${PORT}`);
-});
