@@ -3,14 +3,31 @@ const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 const User = require('../models/user');
+const AdminContact = require('../models/adminContact');
 const fs = require('fs');
+
+async function uploadContactList() {
+  new Promise(function (resolve, reject) {
+    const jsonString = fs.readFileSync('./src/services/birthdays.json');
+    const adminContacts = JSON.parse(jsonString);
+
+    Object.entries(adminContacts).forEach((element) => {
+      const adminContact = new AdminContact({
+        name: element[0],
+        phone_number: element[1],
+      });
+      adminContact.save();
+    });
+    resolve('Contact list was successfully uploaded');
+  });
+}
 
 async function sendMessageToJustinsContacts() {
   User.find().then((user) => {
     user.forEach((element) => {
-      if (element.phone_number == 7153070876) {
+      if (element.phone_number == process.env.JUSTIN) {
         findAdminTextBirthdays(element).then((result) => {
-          if (result == 1) {
+          if (result === 1) {
             birthdayCount++;
           }
         });
@@ -21,9 +38,8 @@ async function sendMessageToJustinsContacts() {
 
 async function findAdminTextBirthdays(user) {
   let today = new Date();
-  let sentBirthday = [];
-
   today = today.toString().slice(4, 10);
+  const sentBirthday = [];
 
   new Promise(function (resolve, reject) {
     user.birthdays.forEach(async (element) => {
@@ -33,10 +49,14 @@ async function findAdminTextBirthdays(user) {
       if (birthday == today) {
         sentBirthday.push(element.birthdayName);
         try {
-          const jsonString = fs.readFileSync('./src/services/birthdays.json');
-          const birthdays = JSON.parse(jsonString);
+          const adminBirthdays = await AdminContact.find();
+          const birthdays = {};
 
-          let res = await sendAdminTextMessage(
+          adminBirthdays.forEach((element) => {
+            birthdays[element.name] = element.phone_number;
+          });
+
+          const res = await sendAdminTextMessage(
             element.birthdayName,
             user.name,
             birthdays[element.birthdayName]
@@ -92,4 +112,5 @@ async function sendAdminTextMessage(birthdayName, userName, userPhone) {
 
 module.exports = {
   sendMessageToJustinsContacts,
+  uploadContactList,
 };
