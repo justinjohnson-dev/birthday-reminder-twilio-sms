@@ -1,17 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController.controller');
+const adminController = require('../controllers/adminController.controller');
 
-/* GET programming languages. */
+/* GET */
 router.get('/testsms', userController.testsms);
 
-/* POST programming language */
+/* POST */
 router.post('/sendEmail', userController.sendEmail);
+router.get('/upload', adminController.upload);
 
-// /* PUT programming language */
+// /* PUT */
 // router.put('/:id', programmingLanguagesController.update);
 
-// /* DELETE programming language */
+// /* DELETE */
 // router.delete('/:id', programmingLanguagesController.remove);
 
 module.exports = router;

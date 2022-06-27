@@ -24,8 +24,8 @@ async function getBirthdays() {
 
 async function findBirthdays(user) {
   let today = new Date();
-  let foundBirthday = 0;
   today = today.toString().slice(4, 10);
+  let foundBirthday = 0;
 
   new Promise(function (resolve, reject) {
     user.birthdays.forEach(async (element) => {
