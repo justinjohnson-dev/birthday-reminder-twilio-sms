@@ -5,10 +5,10 @@ const adminController = require('../controllers/adminController.controller');
 
 /* GET */
 router.get('/testsms', userController.testsms);
+router.get('/upload', adminController.upload);
 
 /* POST */
 router.post('/sendEmail', userController.sendEmail);
-router.get('/upload', adminController.upload);
 
 // /* PUT */
 // router.put('/:id', programmingLanguagesController.update);
