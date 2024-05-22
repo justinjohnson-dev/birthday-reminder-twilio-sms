@@ -1,0 +1,14 @@
+# express server startup
+
+version: '3'
+
+services:
+  web:
+    build: .
+    command: npm run start
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/src
