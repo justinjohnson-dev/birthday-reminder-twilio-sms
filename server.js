@@ -61,8 +61,12 @@ app.listen(PORT, () => {
 
 // Schedule tasks to be run on the server.
 cron.schedule('00 08 * * *', function () {
-  getBirthdays(); // fetch birthdays and send messages
-  sendMessageToJustinsContacts();
+  // currently twilio is down, fixing the issue may take a few weeks for campaign to be approved
+  console.log('executed cron job');
+  console.log('twilio is down, fixing the issue may take a few weeks for campaign to be approved')
+
+  // getBirthdays(); // fetch birthdays and send messages
+  // sendMessageToJustinsContacts();
 });
 
 // cron job for testing
